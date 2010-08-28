@@ -1,0 +1,21 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+  <head>
+    <title>Lair demo</title>
+    <link rel="stylesheet" type="text/css" href="demo.css" />
+    <script type="text/javascript" src="jquery-1.4.2.min.js"></script>
+    <script type="text/javascript" src="lair.js"></script>
+    <script type="text/javascript">
+      $(document).ready(function(){
+	      map = new Lair.Map({id:"map"});
+	      background = map.add(new Lair.Background({image:"floor.png",x:0}));
+	      tiles = map.add(new Lair.Tiles({size:32, image:"tiles.png"}));
+
+	      map.draw();
+      });
+    </script>
+  </head>
+  <body>
+    <div id="map"></div>
+  </body>
+</html>
