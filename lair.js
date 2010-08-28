@@ -58,9 +58,14 @@ Lair.Map.prototype.loadImages = function(after){
     var map = this;
 
     $.each(this.images, function(index, src){
+	    if(map.loadedImages[src]){ // Skip duplicates
+		toLoad--; // This is a dupe, so we have to load one less
+		return;
+	    }
+
 	    var img = new Image();
+	    map.image(src, img);
 	    img.onload = function(){
-		map.image(src, img);
 		toLoad--;
 		if(toLoad === 0){
 		    map.ready = true;
@@ -117,6 +122,7 @@ Lair.Tiles = function(options){
     this.width = options.width || options.size;
     this.height = options.height || options.size;
     this.image = options.image;
+    this.data = options.data || 0;
 
     this.tiles = [];
 };
@@ -131,11 +137,46 @@ Lair.Tiles.prototype.draw = function(el){
     var ctx = this.map.canvas.getContext("2d");
     for(var x = 0 ; x < this.maxx ; x++){
 	for(var y = 0 ; y < this.maxy ; y++){
-	    ctx.drawImage(this.map.image(this.image),
-			  32, 0,
-			  this.width, this.height,
-			  x*this.width, y*this.height,
-			  this.width, this.height);
+	    var source = this.tile(this.at(x, y));
+
+	    if(source){
+		ctx.drawImage(this.map.image(this.image),
+			      source[0], source[1],
+			      this.width, this.height,
+			      x*this.width, y*this.height,
+			      this.width, this.height);
+	    }
 	}
     }
+};
+
+Lair.Tiles.prototype.at = function(x, y){
+    if(this.data instanceof Array){
+	return this.data[x + y * this.maxx];
+    }else if(this.data instanceof Function){
+	return (this.data.bind(this))(x, y);
+    }else {
+	return this.data;
+    }
+};
+
+/**
+   Tiles in tilesheets are addressed as numbers read l-r, like so:
+   0 1 2 3
+   4 5 6 7...
+
+   If you pass in a negative number or null, null will be returned (and nothing will be drawn)
+ */
+Lair.Tiles.prototype.tile = function(num){
+    if(num === null ||
+       num === undefined ||
+       num < 0){
+	return null;
+    }
+
+    // Number of tiles in a row on the tilesheet
+    var row = this.map.image(this.image).width / this.width;
+
+    return [this.width * (num % row),
+	    this.height * Math.floor(num / row)];
 };
