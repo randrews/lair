@@ -5,6 +5,18 @@ Function.prototype.bind = function(self){
     };
 };
 
+Function.prototype.require = function(name, args){
+    var fn = this;
+
+    return function(){
+	if(!this["_"+name+"Called"]){
+	    this[name].apply(this,args);
+	    this["_"+name+"Called"] = true;
+	}
+	return fn.apply(this, arguments);
+    }
+};
+
 //////////////////////////////////////////////////
 
 var Lair = {};
@@ -14,27 +26,48 @@ Lair.create = function(){
     return document.createElement.apply(document, arguments);
 };
 
+Lair.field = function(klass, name, defaultValue){
+    klass.prototype[name] = function(value){
+	if(value === undefined){
+	    if(this["_"+name] === undefined){
+		if(typeof defaultValue === "function"){
+		    return defaultValue.apply(this,[]);
+		} else {
+		    return defaultValue;
+		}
+	    } else {
+		return this["_"+name];
+	    }
+	} else {
+	    this["_"+name] = value;
+	    return this;
+	}
+    };
+};
+
 //////////////////////////////////////////////////
 
 Lair.Map = function(options){
-    this.id = options.id;
-    this.container = $("#"+this.id);
+    this.layers = [];
+    this.images = [];
+    this.loadedImages = {};
+};
 
+Lair.field(Lair.Map, "id");
+Lair.field(Lair.Map, "container", function(){return $("#"+this.id());});
+
+Lair.Map.prototype.prepare = function(){
     this.el = $(Lair.create("div"));
     this.el.css("position","relative");
     this.el.css("width","100%");
     this.el.css("height","100%");
-    this.container.append(this.el);
+    this.container().append(this.el);
 
     var canvas = $(Lair.create("canvas"));
     canvas.attr("width", this.width());
     canvas.attr("height", this.height());
     this.el.append(canvas);
     this.canvas = canvas[0];
-
-    this.layers = [];
-    this.images = [];
-    this.loadedImages = {};
 };
 
 Lair.Map.prototype.add = function(layer){
@@ -42,7 +75,7 @@ Lair.Map.prototype.add = function(layer){
     layer.map = this;
     layer.setup(this.el);
     return layer;
-};
+}.require("prepare");
 
 Lair.Map.prototype.draw = function(){
     if(this.ready){
@@ -51,7 +84,7 @@ Lair.Map.prototype.draw = function(){
     }else{
 	this.loadImages(this.draw.bind(this));
     }
-};
+}.require("prepare");
 
 Lair.Map.prototype.loadImages = function(after){
     var toLoad = this.images.length;
