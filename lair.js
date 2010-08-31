@@ -187,7 +187,11 @@ Lair.index.tiles = function(){
 };
 
 Lair.index.pixels = function(){
-    if(arguments.length === 2){
+    if(arguments.length === 1){
+	this.tileWidth = arguments[0];
+	this.tileHeight = arguments[0];
+	return this;
+    } else if(arguments.length === 2){
 	this.tileWidth = arguments[0];
 	this.tileHeight = arguments[1];
 	return this;
