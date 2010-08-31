@@ -126,27 +126,23 @@ Lair.Map.prototype.height = function(){
 
 //////////////////////////////////////////////////
 
-Lair.Background = function(options){
-    this.image = options.image;
+Lair.Background = function(){};
 
-    this.x = options.x || 0;
-    this.y = options.y || 0;
-};
+Lair.field(Lair.Background, "image");
+Lair.field(Lair.Background, "x", 0);
+Lair.field(Lair.Background, "y", 0);
 
 Lair.Background.prototype.setup = function(el,ready){
-    this.map.images.push(this.image);
+    this.map.images.push(this.image());
 };
 
 Lair.Background.prototype.draw = function(el){
-    this.position();
     var ctx = this.map.canvas.getContext("2d");
-    ctx.drawImage(this.map.image(this.image),this.x,this.y);
+    ctx.drawImage(this.map.image(this.image()),this.x(),this.y());
 };
 
 Lair.Background.prototype.position = function(x, y){
-    this.x = x || this.x;
-    this.y = y || this.y;
-    return [this.x, this.y];
+    return [this.x(x), this.y(y)];
 };
 
 //////////////////////////////////////////////////

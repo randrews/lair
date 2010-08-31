@@ -34,7 +34,7 @@ $(document).ready(function(){
 	map = new Lair.Map().id("map");
 
 	// A background image
-	background = map.add(new Lair.Background({image:"floor.png",x:0}));
+	background = map.add(new Lair.Background().image("floor.png"));
 
 	// Tile layer with all the same tile
 	floor = map.add(new Lair.Tiles({size:32, image:"tiles.png", data:1}));
