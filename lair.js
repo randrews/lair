@@ -110,10 +110,9 @@ Lair.ImageSet.prototype.image = function(src){
 Lair.ImageSet.prototype.add = function(src){
     if(this.images[src]){return;} // Skip duplicates
     this.numImages++;
-    var img = new Image();
 
-    this.images[src] = img;
-    img.onload = function(){
+    this.images[src] = new Image();
+    this.images[src].onload = function(){
 	this.loaded++;
 	if(this.loaded === this.numImages){
 	    if(this.whenReady){
@@ -122,7 +121,7 @@ Lair.ImageSet.prototype.add = function(src){
 	}
     }.bind(this);
 
-    img.src = src;
+    this.images[src].src = src;
 
     return this;
 };
@@ -154,6 +153,66 @@ Lair.Background.prototype.draw = function(el){
 
 Lair.Background.prototype.position = function(x, y){
     return [this.x(x), this.y(y)];
+};
+
+//////////////////////////////////////////////////
+
+Lair.index = function(){
+    var index = function(x, y){
+	return x + width * y;
+    };
+
+    index.tiles = Lair.index.tiles;
+    index.pixels = Lair.index.pixels;
+    index.invert = Lair.index.invert;
+    index.inBounds = Lair.index.inBounds;
+    index.coords = Lair.index.coords;
+
+    index.width = width;
+    index.height = height;
+    index.tileWidth = tileWidth;
+    index.tileHeight = tileHeight;
+
+    return index;
+};
+
+Lair.index.tiles = function(){
+    if(arguments.length === 2){
+	this.width = arguments[0];
+	this.height = arguments[1];
+	return this;
+    } else {
+	return [this.width, this.height];
+    }
+};
+
+Lair.index.pixels = function(){
+    if(arguments.length === 2){
+	this.tileWidth = arguments[0];
+	this.tileHeight = arguments[1];
+	return this;
+    } else {
+	return [this.tileWidth, this.tileHeight];
+    }
+};
+
+Lair.index.invert = function(n){
+    return [n % this.width,
+	    Math.floor(n / this.width)];
+};
+
+Lair.index.inBounds = function(x, y){
+    return x < 0 || x >= this.width ||
+	y < 0 || y >= this.height;
+};
+
+Lair.index.coords = function(x, y){
+    if(y === undefined){
+	return this.coords.apply(this, this.invert(x));
+    } else {
+	return [this.tileWidth * x,
+		this.tileHeight * y];
+    }
 };
 
 //////////////////////////////////////////////////
