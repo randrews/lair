@@ -49,8 +49,7 @@ Lair.field = function(klass, name, defaultValue){
 
 Lair.Map = function(options){
     this.layers = [];
-    this.images = [];
-    this.loadedImages = {};
+    this.images = new Lair.ImageSet();
 };
 
 Lair.field(Lair.Map, "id");
@@ -78,42 +77,14 @@ Lair.Map.prototype.add = function(layer){
 }.require("prepare");
 
 Lair.Map.prototype.draw = function(){
-    if(this.ready){
-	var el = this.el;
-	$.each(this.layers, function(){this.draw(el);});
-    }else{
-	this.loadImages(this.draw.bind(this));
-    }
+    this.images.ready(function(){
+	    var el = this.el;
+	    $.each(this.layers, function(){this.draw(el);});
+	}.bind(this));
 }.require("prepare");
 
-Lair.Map.prototype.loadImages = function(after){
-    var toLoad = this.images.length;
-    var map = this;
-
-    $.each(this.images, function(index, src){
-	    if(map.loadedImages[src]){ // Skip duplicates
-		toLoad--; // This is a dupe, so we have to load one less
-		return;
-	    }
-
-	    var img = new Image();
-	    map.image(src, img);
-	    img.onload = function(){
-		toLoad--;
-		if(toLoad === 0){
-		    map.ready = true;
-		    after();
-		}
-	    };
-	    img.src = src;
-	});
-};
-
-Lair.Map.prototype.image = function(name, image){
-    if(image){
-	this.loadedImages[name] = image;
-    }
-    return this.loadedImages[name];
+Lair.Map.prototype.image = function(src){
+    return this.images.image(src);
 };
 
 Lair.Map.prototype.width = function(){
@@ -126,6 +97,46 @@ Lair.Map.prototype.height = function(){
 
 //////////////////////////////////////////////////
 
+Lair.ImageSet = function(){
+    this.images = {};
+    this.loaded = 0;
+    this.numImages = 0;
+};
+
+Lair.ImageSet.prototype.image = function(src){
+    return this.images[src];
+};
+
+Lair.ImageSet.prototype.add = function(src){
+    if(this.images[src]){return;} // Skip duplicates
+    this.numImages++;
+    var img = new Image();
+
+    this.images[src] = img;
+    img.onload = function(){
+	this.loaded++;
+	if(this.loaded === this.numImages){
+	    if(this.whenReady){
+		this.whenReady();
+	    }
+	}
+    }.bind(this);
+
+    img.src = src;
+
+    return this;
+};
+
+Lair.ImageSet.prototype.ready = function(whenReady){
+    if(this.loaded === this.numImages){
+	whenReady();
+    } else {
+	this.whenReady = whenReady;
+    }
+};
+
+//////////////////////////////////////////////////
+
 Lair.Background = function(){};
 
 Lair.field(Lair.Background, "image");
@@ -133,7 +144,7 @@ Lair.field(Lair.Background, "x", 0);
 Lair.field(Lair.Background, "y", 0);
 
 Lair.Background.prototype.setup = function(el,ready){
-    this.map.images.push(this.image());
+    this.map.images.add(this.image());
 };
 
 Lair.Background.prototype.draw = function(el){
@@ -159,7 +170,7 @@ Lair.Tiles = function(options){
 Lair.Tiles.prototype.setup = function(el){
     this.maxx = this.map.width() / this.width;
     this.maxy = this.map.height() / this.height;
-    this.map.images.push(this.image);
+    this.map.images.add(this.image);
 };
 
 Lair.Tiles.prototype.draw = function(el){
